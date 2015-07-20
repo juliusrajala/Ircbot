@@ -18,6 +18,7 @@ REALNAME = "lorenz0bot"
 CHANNELINIT = ["#lorenzobotti"]
 OWNER = "Lorenz0"
 
+END = '\r\n'
 
 # Komentojen jakaja
 def parseri(data):
@@ -30,7 +31,7 @@ def parseri(data):
 		messageSender(kanava, "gayyyyy!")
 	if viesti.find("ping") != -1:
 		print("PONG that shit.")
-		sukka.send('PONG ' + silvottu[1] + '\r\n')
+		sukka.send('PONG ' + silvottu[1] + END)
 	if viesti.find("!spotitracks") != -1:
 		kanava = findChannel(viesti.split(" "))
 		messageSender(kanava, etsiKipaleet(silvottu[2]))
@@ -39,10 +40,32 @@ def parseri(data):
 		kanava = findChannel(viesti.split(" "))
 		ilmot(kanava)
 
+def translator(data):
+	global funcDictionary
+	print(data)
+	viesti = data.lower().split(" ")
+	print(viesti)
+	# if all(key in funcDictionary for a in viesti):
+	# 	funcDictionary[word](" ".join(viesti).split(":")[1])
+	for a in viesti:
+		if a in funcDictionary:
+			funcDictionary[a](" ".join(viesti).split(":")[1])
+
+
+
 # Functions
 
+def do_pong(self, arg):
+	print("Pong, pong!")
+	sukka.send("PONG " + jaaKahteen(arg)[1]+END)
+
+def do_hahanswer(self, arg):
+	print("Answering laughter")
+	kanava = findChannel(arg.split(" "))
+	messageSender(kanava, "gayyy!")
+
 def messageSender(channel, message):
-	sukka.send("PRIVMSG "+ channel + " :" + message + "\r\n")
+	sukka.send("PRIVMSG "+ channel + " :" + message + END)
 
 def jaaKahteen(data):
 	data = data.split(":")
@@ -64,23 +87,30 @@ def findChannel(lista):
 			return word;
 			pass
 
-def ilmot(kanava):
+def do_ilmot(self, arg):
 	print("Fetching ilmot.")
 	auki = scrapeEvents()
 	for event in auki:
 		print(event)
 		messageSender(kanava, event)
 
+#Function palette
+funcDictionary = {
+				"hah":do_hahanswer,
+				"ping": do_pong,
+				"!ilmot":do_ilmot,
+				 }
+
 # Connect to server
 sukka = socket.socket( )
 sukka.connect((HOST, PORT))
-sukka.send('NICK ' + NICK + '\r\n')
-sukka.send('USER ' + IDENTITY + ' '+HOST+' bla :'+ REALNAME+'\r\n')
+sukka.send('NICK ' + NICK + END)
+sukka.send('USER ' + IDENTITY + ' '+HOST+' bla :'+ REALNAME+END)
 for channel in CHANNELINIT:
-	sukka.send('JOIN ' +channel+'\r\n')
+	sukka.send('JOIN ' +channel+END)
 print("Connection established.")
 
 # Main
 while True:
 	data = sukka.recv(4096)
-	parseri(data)
+	translator(data)
